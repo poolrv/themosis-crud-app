@@ -1,31 +1,29 @@
 FROM php:8.2-apache
 
-# 1. Instala extensiones y cliente PostgreSQL y MySQL (si usas ambos)
-RUN apt-get update \
- && apt-get install -y \
-      libzip-dev zip unzip git curl libpng-dev libjpeg-dev libfreetype6-dev libonig-dev \
-      postgresql-client default-mysql-client \
- && docker-php-ext-install pdo pdo_mysql pdo_pgsql mysqli zip
+RUN apt-get update && apt-get install -y \
+    libzip-dev zip unzip git curl libpng-dev libjpeg-dev libfreetype6-dev libonig-dev
 
-# 2. Activa mod_rewrite
+# Instalación cliente PostgreSQL (ajusta versión si falla)
+RUN apt-get install -y postgresql-client-14 || apt-get install -y postgresql-client
+
+# Instalación cliente MySQL (opcional, si lo necesitas)
+RUN apt-get install -y default-mysql-client || apt-get install -y mysql-client
+
+RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mysqli zip
+
 RUN a2enmod rewrite
 
-# 3. Cambia DocumentRoot a htdocs (Themosis usa public/htdocs)
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/htdocs|g' \
     /etc/apache2/sites-available/000-default.conf
 
-# 4. Permitir .htaccess en htdocs
 RUN printf '<Directory /var/www/html/htdocs>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
-</Directory>' \
-    >> /etc/apache2/apache2.conf
+</Directory>' >> /etc/apache2/apache2.conf
 
-# 5. Instala Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 6. Ajusta propietarios
 RUN chown -R www-data:www-data /var/www/html
 
 CMD ["sh", "-c", "\
