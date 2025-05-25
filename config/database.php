@@ -47,7 +47,19 @@ return [
             'prefix' => env('DATABASE_PREFIX', 'wp_'),
             'strict' => true,
             'engine' => null,
-        ]
+        ],
+        'pgsql' => [
+            'driver' => 'pgsql',
+            'host' => env('DATABASE_HOST', '127.0.0.1'),
+            'port' => env('DATABASE_PORT', '5432'),
+            'database' => env('DATABASE_NAME', 'forge'),
+            'username' => env('DATABASE_USER', 'forge'),
+            'password' => env('DATABASE_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'schema' => 'public',
+            'sslmode' => 'prefer',
+        ],
     ],
     /*
     |--------------------------------------------------------------------------
