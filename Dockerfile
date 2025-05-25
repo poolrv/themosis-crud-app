@@ -3,7 +3,9 @@ FROM php:8.2-apache
 RUN apt-get update && apt-get install -y \
     libzip-dev zip unzip git curl libpng-dev libjpeg-dev libfreetype6-dev libonig-dev \
     default-mysql-client libmysqlclient-dev \
-    postgresql-client-14 libpq-dev
+    postgresql-client libpq-dev \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mysqli zip
 
