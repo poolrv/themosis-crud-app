@@ -1,13 +1,9 @@
 FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
-    libzip-dev zip unzip git curl libpng-dev libjpeg-dev libfreetype6-dev libonig-dev
-
-# Instalación cliente PostgreSQL (ajusta versión si falla)
-RUN apt-get install -y postgresql-client-14 || apt-get install -y postgresql-client
-
-# Instalación cliente MySQL (opcional, si lo necesitas)
-RUN apt-get install -y default-mysql-client || apt-get install -y mysql-client
+    libzip-dev zip unzip git curl libpng-dev libjpeg-dev libfreetype6-dev libonig-dev \
+    default-mysql-client libmysqlclient-dev \
+    postgresql-client-14 libpq-dev
 
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mysqli zip
 
