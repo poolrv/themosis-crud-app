@@ -1,33 +1,163 @@
-Themosis framework
-==================
+# 🧱 Themosis con Docker
 
-[![Build Status](https://travis-ci.org/themosis/themosis.svg?branch=dev)](https://travis-ci.org/themosis/themosis)
+Este proyecto configura un entorno de desarrollo **Themosis Framework** utilizando Docker con Apache, PHP 8.2 y MySQL 8.0. Incluye Composer y soporte para migraciones automáticas al iniciar el contenedor.
 
-The Themosis framework is a tool aimed to WordPress developers of any levels. But the better WordPress and PHP knowledge you have the easier it is to work with.
+## 🚀 Características
 
-Themosis framework is a tool to help you develop websites and web applications faster using [WordPress](https://wordpress.org). Using an elegant and simple code syntax, Themosis framework helps you structure and organize your code and allows you to better manage and scale your WordPress websites and applications.
+- PHP 8.2 con Apache
+- MySQL 8.0
+- Composer incluido
+- Soporte para extensiones necesarias (zip, gd, pdo_mysql, etc.)
+- Migraciones automáticas al levantar el contenedor
+- Permite `.htaccess` en `public/htdocs` (requerido por Themosis)
+- Espera activa a la base de datos antes de iniciar el servidor
 
-Installation
-------------
-Please see the [installation section](https://framework.themosis.com/docs/master/installation/) of the Themosis documentation.
+## 📁 Estructura esperada
 
-Development team
-----------------
-The framework was created by [Julien Lambé](https://www.themosis.com/), who continues to lead the development.
+El proyecto espera que los archivos de Themosis estén en la raíz del proyecto, y que el `public/htdocs` contenga el frontend del sitio.
 
-Contributing
-------------
-Any help is appreciated. The project is open-source and we encourage you to participate. You can contribute to the project in multiple ways by:
+```
+/
+├── htdocs/
+│   └── index.php
+├── vendor/
+├── composer.json
+├── Dockerfile
+├── docker-compose.yml
+└── README.md
+```
 
-- Reporting a bug issue
-- Suggesting features
-- Sending a pull request with code fix or feature
-- Following the project on [GitHub](https://github.com/themosis)
-- Following us on Twitter: [@Themosis](https://twitter.com/Themosis)
-- Sharing the project around your community
+## 🐳 Requisitos
 
-For details about contributing to the framework, please check the [contribution guide](https://framework.themosis.com/docs/master/contributing).
+- Docker
+- Docker Compose
 
-License
--------
-The Themosis framework is open-source software licensed under [GPL-2+ license](http://www.gnu.org/licenses/gpl-2.0.html).
+## ⚙️ Instalación y uso
+
+1. Clona este repositorio o coloca tu proyecto Themosis en la misma carpeta que este `Dockerfile`.
+
+2. Ejecuta los contenedores:
+
+```bash
+docker-compose up --build
+```
+
+3. Accede al sitio en: [http://localhost:8080](http://localhost:8080)
+
+El contenedor `web` esperará a que la base de datos esté lista, luego ejecutará:
+
+- `composer install`
+- `php console migrate --env=production`
+
+> 💡 Asegúrate de tener configurado tu archivo `.env` correctamente para el entorno de producción, especialmente las credenciales de base de datos.
+
+## 🔧 Variables de entorno
+
+Estas variables se usan en el contenedor `web` y se configuran en `docker-compose.yml`:
+
+```env
+WORDPRESS_DB_HOST=db
+WORDPRESS_DB_NAME=themosis
+WORDPRESS_DB_USER=themosis
+WORDPRESS_DB_PASSWORD=themosis
+```
+
+## 📦 Base de datos
+
+El contenedor `db` usa MySQL 8.0, con las siguientes credenciales:
+
+- Usuario: `themosis`
+- Contraseña: `themosis`
+- Base de datos: `themosis`
+- Puerto: `3306`
+
+Los datos se almacenan de forma persistente usando el volumen `dbdata`.
+
+## 🧹 Comandos útiles
+
+- **Reconstruir el entorno desde cero** (borrando volúmenes):
+
+```bash
+docker-compose down -v
+docker-compose up --build
+```
+
+- **Acceder al contenedor web**:
+
+```bash
+docker exec -it themosis-web bash
+```
+
+- **Acceder al contenedor de base de datos**:
+
+```bash
+docker exec -it themosis-db bash
+mysql -u themosis -p
+```
+
+## 🛠️ Troubleshooting
+
+- Si Composer falla por permisos, asegúrate de que la carpeta `vendor/` y demás tengan permisos adecuados:
+  ```bash
+  sudo chown -R $(whoami):$(whoami) .
+  ```
+
+- Si necesitas reinstalar dependencias:
+  ```bash
+  docker-compose exec web composer install
+  ```
+
+## 🚀 Despliegue en Render
+
+Para desplegar este proyecto en **Render.com**, sigue los siguientes pasos:
+
+### 1. Crear base de datos en Render
+
+- Ve a [Render Dashboard](https://dashboard.render.com/)
+- Crea un nuevo servicio de base de datos MySQL
+- Copia las credenciales (host, puerto, usuario, contraseña y nombre de base de datos)
+
+### 2. Subir tu repositorio a GitHub
+
+Asegúrate de que tu repositorio contenga:
+
+- `Dockerfile`
+- `public/htdocs` con los archivos del sitio
+- `.env.production` (o configurar variables en el panel)
+
+### 3. Crear un Web Service en Render
+
+- Elige "Web Service"
+- Conecta tu repositorio
+- Elige la rama
+- Configura:
+  - **Build Command:** *(vacío o `echo ok` si usas Dockerfile)*
+  - **Start Command:** *(vacío si usas `CMD` en Dockerfile)*
+  - **Dockerfile path:** `Dockerfile`
+
+### 4. Configurar variables de entorno
+
+Agrega en Render estas variables de entorno:
+
+```env
+WORDPRESS_DB_HOST=<host de la BD en Render>
+WORDPRESS_DB_NAME=<nombre de la BD>
+WORDPRESS_DB_USER=<usuario>
+WORDPRESS_DB_PASSWORD=<contraseña>
+```
+
+### 5. Configurar puerto
+
+Render espera que tu aplicación escuche en el puerto definido por la variable `PORT`. Agrega al Dockerfile:
+
+```Dockerfile
+ENV PORT=10000
+EXPOSE 10000
+```
+Y en `apache2` configura que escuche en ese puerto:
+
+```Dockerfile
+RUN sed -i 's/80/${PORT}/g' /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
+```
+
+---
