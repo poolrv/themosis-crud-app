@@ -1,11 +1,11 @@
 FROM php:8.2-apache
 
-# 1. Instala extensiones y cliente MySQL
+# 1. Instala extensiones y cliente PostgreSQL y MySQL (si usas ambos)
 RUN apt-get update \
  && apt-get install -y \
       libzip-dev zip unzip git curl libpng-dev libjpeg-dev libfreetype6-dev libonig-dev \
-      default-mysql-client \
- && docker-php-ext-install pdo pdo_mysql mysqli zip
+      postgresql-client default-mysql-client \
+ && docker-php-ext-install pdo pdo_mysql pdo_pgsql mysqli zip
 
 # 2. Activa mod_rewrite
 RUN a2enmod rewrite
@@ -30,7 +30,7 @@ RUN chown -R www-data:www-data /var/www/html
 
 CMD ["sh", "-c", "\
   echo '⚙️  Esperando a la base de datos...'; \
-  until mysqladmin ping -h\"$WORDPRESS_DB_HOST\" --silent; do sleep 2; done; \
+  until pg_isready -h \"$DATABASE_HOST\" -p \"$DATABASE_PORT\" -U \"$DATABASE_USER\"; do sleep 2; done; \
   echo '✅  BD lista'; \
   cd /var/www/html; \
   if [ ! -d vendor ]; then \
